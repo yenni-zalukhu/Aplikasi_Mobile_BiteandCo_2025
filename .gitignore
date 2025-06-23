@@ -32,6 +32,9 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Config files with sensitive data
+app/constants/config.js
+
 # typescript
 *.tsbuildinfo
 

@@ -2,7 +2,8 @@ const config = {
   // API Configuration - Production mode
   API_URL: "https://www.biteandco.id/api/v1", // Always use production API
   
-  GOOGLE_MAPS_API_KEY: "AIzaSyBozwWiB09l1Mituc8wtOKRViMK6c7ILsU",
+  // Google Maps API Key - Replace with your actual API key
+  GOOGLE_MAPS_API_KEY: "YOUR_GOOGLE_MAPS_API_KEY_HERE",
   
   // Development Configuration
   DEV_MODE: __DEV__,
