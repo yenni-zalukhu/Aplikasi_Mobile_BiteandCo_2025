@@ -5,17 +5,34 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "biteandco",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "b884e7a2-afd5-4ba4-b773-3df744b8644f"
+      },
+      "router": {
+        "origin": false
+      }
+    },
+    "experiments": {
+      "typedRoutes": false
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.biteandco.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.biteandco.app",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +49,22 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you upload KTP and selfie images.",
+          "cameraPermission": "The app accesses your camera to take photos of your KTP and selfie.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow BiteAndCo to use your location for delivery tracking and finding nearby restaurants."
+        }
       ]
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "owner": "biteandco"
   }
 }

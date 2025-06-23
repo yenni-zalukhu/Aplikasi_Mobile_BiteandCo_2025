@@ -1,8 +1,8 @@
 import { StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import HeaderTitleBack from "../components/HeaderTitleBack";
-import COLORS from "../constants/color";
+import HeaderTitleBack from '../components/HeaderTitleBack';
+import COLORS from '../constants/color';
 
 const DetailPengantaran = () => {
   return (

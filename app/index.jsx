@@ -6,14 +6,37 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import logo from "../assets/images/logo.png";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Redirect } from 'expo-router';
 
-const index = () => {
+const Index = () => {
   const router = useRouter();
-  return <Redirect href="/buyer/CateringDetail" />;
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check for existing tokens
+        const sellerToken = await AsyncStorage.getItem('sellerToken');
+        const buyerToken = await AsyncStorage.getItem('buyerToken');
+
+        // Redirect based on which token exists
+        if (sellerToken) {
+          router.replace("/seller/(tabs)");
+        } else if (buyerToken) {
+          router.replace("/buyer/(tabs)");
+        }
+        // If no tokens, do nothing (show the welcome screen)
+      } catch (error) {
+        console.error("Error checking authentication:", error);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   return (
     <SafeAreaView style={{ backgroundColor: "#711330", height: "100%" }}>
       <View
@@ -45,10 +68,8 @@ const index = () => {
             justifyContent: "center",
           }}
           onPress={() => {
-            
             router.push("/started");
-          }
-        }
+          }}
         >
           <Text
             style={{
@@ -60,12 +81,11 @@ const index = () => {
             Mulai
           </Text>
         </TouchableOpacity>
-        
       </View>
     </SafeAreaView>
   );
 };
 
-export default index;
+export default Index;
 
 const styles = StyleSheet.create({});

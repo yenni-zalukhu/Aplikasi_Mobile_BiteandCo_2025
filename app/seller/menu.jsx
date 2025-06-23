@@ -1,7 +1,7 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import HeaderTitleBack from "../components/HeaderTitleBack";
+import HeaderTitleBack from '../components/HeaderTitleBack';
 import menuIcon from "../../assets/images/menuIcon.png";
 import menuPaket from "../../assets/images/menuPaket.png";
 import { useRouter } from "expo-router";

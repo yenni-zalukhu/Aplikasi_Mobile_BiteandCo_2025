@@ -3,10 +3,10 @@ import React from 'react';
 import { Image } from 'react-native'; // Added this import
 import HapticTab from '../../components/HapticTab';
 import COLOR from '../../constants/color';
+import { MaterialCommunityIcons } from '@expo/vector-icons'; // Added for third-party icon
 
 // Fixed image paths
 import homeIcon from '../../../assets/images/home.png';
-import laporanIcon from '../../../assets/images/laporan.png';
 import chatIcon from '../../../assets/images/chat.png';
 import profileIcon from '../../../assets/images/profile.png';
 
@@ -38,7 +38,7 @@ export default function TabLayout() {
               style={{
                 width: 28,
                 height: 28,
-                tintColor: focused ? COLOR.YELLOW : COLOR.GRAY,
+                tintColor: focused ? COLOR.YELLOW : '#fff', // Use white when not focused
               }}
             />
           ),
@@ -46,19 +46,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="laporan"
+        name="order"
         options={{
           tabBarIcon: ({ focused }) => (
-            <Image
-              source={laporanIcon}
-              style={{
-                width: 28,
-                height: 28,
-                tintColor: focused ? COLOR.YELLOW : COLOR.GRAY,
-              }}
+            <MaterialCommunityIcons
+              name="file-document-outline" // Example third-party icon
+              size={28}
+              color={focused ? COLOR.YELLOW : '#fff'} // Use white when not focused
             />
           ),
-          tabBarLabel: "Laporan",
+          tabBarLabel: "Pesanan",
         }}
       />
       <Tabs.Screen
@@ -70,7 +67,8 @@ export default function TabLayout() {
               style={{
                 width: 28,
                 height: 28,
-                tintColor: focused ? COLOR.YELLOW : COLOR.GRAY,
+                resizeMode: 'contain', // Ensure icon is not cropped
+                tintColor: focused ? COLOR.YELLOW : '#fff', // Use white when not focused
               }}
             />
           ),
@@ -86,7 +84,7 @@ export default function TabLayout() {
               style={{
                 width: 28,
                 height: 28,
-                tintColor: focused ? COLOR.YELLOW : COLOR.GRAY,
+                tintColor: focused ? COLOR.YELLOW : '#fff', // Use white when not focused
               }}
             />
           ),

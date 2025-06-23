@@ -1,0 +1,523 @@
+import { useState, useEffect } from 'react';
+import { Platform } from 'react-native';
+import { makeRedirectUri } from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
+import { auth, googleProvider, isFirebaseAuthAvailable } from '../../firebase';
+import { signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import GoogleSignInConfig from '../constants/googleSignInConfig';
+import config from '../constants/config';
+import { 
+  googleAuthDebugger, 
+  authModeManager, 
+  GoogleAuthError, 
+  ERROR_CODES, 
+  SANDBOX_USERS 
+} from '../constants/googleAuthUtils';
+
+const useGoogleAuth = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isProduction, setIsProduction] = useState(authModeManager.isProductionMode());
+  const [currentMode, setCurrentMode] = useState(authModeManager.getMode());
+  const [sandboxUserIndex, setSandboxUserIndex] = useState(0);
+
+  // Configure Google Auth Request for Expo (only in production mode)
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: GoogleSignInConfig.PRODUCTION.WEB_CLIENT_ID,
+    redirectUri: makeRedirectUri({
+      scheme: 'com.biteandco.app',
+      path: 'redirect',
+    }),
+  });
+
+  useEffect(() => {
+    const mode = authModeManager.getMode();
+    setCurrentMode(mode);
+    setIsProduction(authModeManager.isProductionMode());
+    
+    googleAuthDebugger.info('Google Auth Hook initialized', {
+      mode,
+      isProduction: authModeManager.isProductionMode(),
+      clientId: GoogleSignInConfig.PRODUCTION.WEB_CLIENT_ID,
+      firebaseAuthAvailable: isFirebaseAuthAvailable(),
+      platform: Platform.OS,
+    });
+  }, []);
+
+  const signInWithGoogle = async () => {
+    setIsLoading(true);
+    googleAuthDebugger.info('Google Sign-In initiated', { 
+      mode: currentMode,
+      firebaseAvailable: isFirebaseAuthAvailable(),
+      platform: Platform.OS 
+    });
+
+    try {
+      if (authModeManager.isSandboxMode()) {
+        return await handleSandboxSignIn();
+      } else {
+        return await handleProductionSignIn();
+      }
+    } catch (error) {
+      googleAuthDebugger.error('Google Sign-In failed', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        stack: error.stack,
+      });
+      
+      return {
+        success: false,
+        cancelled: false,
+        error: error.message,
+        errorCode: error.code,
+        debugLogs: googleAuthDebugger.getLogs()
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSandboxSignIn = async () => {
+    googleAuthDebugger.info('Sandbox mode sign-in started');
+    
+    // Simulate some delay for realistic UX
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Cycle through sandbox users
+    const sandboxUser = SANDBOX_USERS[sandboxUserIndex];
+    setSandboxUserIndex((prev) => (prev + 1) % SANDBOX_USERS.length);
+    
+    googleAuthDebugger.info('Sandbox user selected', {
+      user: sandboxUser,
+      nextIndex: (sandboxUserIndex + 1) % SANDBOX_USERS.length
+    });
+
+    return {
+      success: true,
+      cancelled: false,
+      userExists: !sandboxUser.isNew,
+      userInfo: {
+        id: sandboxUser.googleId,
+        name: sandboxUser.name,
+        email: sandboxUser.email,
+        photo: sandboxUser.photo
+      },
+      user: sandboxUser,
+      isNew: sandboxUser.isNew,
+      isSandbox: true,
+      sandboxToken: sandboxUser.token
+    };
+  };
+
+  const handleProductionSignIn = async () => {
+    googleAuthDebugger.info('Production mode sign-in started');
+    
+    // Check if Firebase Auth is available
+    if (!isFirebaseAuthAvailable()) {
+      throw new GoogleAuthError(
+        'Firebase Auth not available. Please use a development build or production build.',
+        ERROR_CODES.FIREBASE_AUTH_UNAVAILABLE,
+        {
+          platform: Platform.OS,
+          isExpoGo: typeof global !== 'undefined' && global.__expo?.modules,
+        }
+      );
+    }
+
+    googleAuthDebugger.info('Firebase Auth available, prompting for Google authentication');
+    
+    // Prompt for Google authentication
+    const result = await promptAsync();
+    
+    googleAuthDebugger.debug('Google prompt result', {
+      type: result.type,
+      hasParams: !!result.params,
+      hasError: !!result.error
+    });
+    
+    if (result.type === 'success') {
+      const { id_token, access_token } = result.params;
+      
+      if (!id_token) {
+        throw new GoogleAuthError(
+          'No ID token received from Google Sign-In',
+          ERROR_CODES.NO_ID_TOKEN,
+          { params: result.params }
+        );
+      }
+
+      googleAuthDebugger.info('Google authentication successful, creating Firebase credential');
+      
+      // Create a Google credential with the token
+      const googleCredential = GoogleAuthProvider.credential(id_token, access_token);
+
+      googleAuthDebugger.debug('Firebase credential created, signing in');
+      
+      // Sign in with credential
+      const firebaseResult = await signInWithCredential(auth, googleCredential);
+
+      const userInfo = {
+        id: firebaseResult.user.uid,
+        name: firebaseResult.user.displayName,
+        email: firebaseResult.user.email,
+        photo: firebaseResult.user.photoURL
+      };
+
+      googleAuthDebugger.info('Firebase authentication successful', {
+        userId: userInfo.id,
+        email: userInfo.email,
+        isNewUser: firebaseResult.additionalUserInfo?.isNewUser
+      });
+
+      return {
+        success: true,
+        cancelled: false,
+        userExists: false, // Will be checked by caller against backend
+        userInfo: userInfo,
+        user: userInfo,
+        isNew: firebaseResult.additionalUserInfo?.isNewUser || false,
+        isSandbox: false,
+        firebaseUser: firebaseResult.user
+      };
+    } else if (result.type === 'cancel') {
+      googleAuthDebugger.warn('Google Sign-In cancelled by user');
+      throw new GoogleAuthError(
+        'Sign in was cancelled',
+        ERROR_CODES.GOOGLE_SIGNIN_CANCELLED
+      );
+    } else {
+      throw new GoogleAuthError(
+        'Google Sign-In failed: ' + (result.error?.message || 'Unknown error'),
+        ERROR_CODES.GOOGLE_SIGNIN_FAILED,
+        { result }
+      );
+    }
+  };
+
+  const loginWithGoogle = async (userInfo) => {
+    googleAuthDebugger.info('Google login process started', {
+      mode: currentMode,
+      userEmail: userInfo?.email,
+      isSandbox: authModeManager.isSandboxMode()
+    });
+
+    try {
+      if (authModeManager.isSandboxMode()) {
+        return await handleSandboxLogin(userInfo);
+      } else {
+        return await handleProductionLogin(userInfo);
+      }
+    } catch (error) {
+      googleAuthDebugger.error('Google login failed', {
+        error: error.message,
+        code: error.code,
+        userEmail: userInfo?.email,
+        stack: error.stack
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        errorCode: error.code,
+        debugLogs: googleAuthDebugger.getLogs()
+      };
+    }
+  };
+
+  const handleSandboxLogin = async (userInfo) => {
+    googleAuthDebugger.info('Sandbox login process');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Find the sandbox user by email
+    const sandboxUser = SANDBOX_USERS.find(user => user.email === userInfo.email);
+    
+    if (!sandboxUser) {
+      throw new GoogleAuthError(
+        'Sandbox user not found',
+        ERROR_CODES.USER_NOT_FOUND,
+        { email: userInfo.email, availableUsers: SANDBOX_USERS.map(u => u.email) }
+      );
+    }
+
+    googleAuthDebugger.info('Sandbox login successful', {
+      user: sandboxUser.email,
+      token: sandboxUser.token
+    });
+
+    return {
+      success: true,
+      token: sandboxUser.token,
+      user: sandboxUser,
+      isSandbox: true
+    };
+  };
+
+  const handleProductionLogin = async (userInfo) => {
+    googleAuthDebugger.info('Production login process', {
+      apiUrl: `${config.API_URL}/buyer/google-login`,
+      userEmail: userInfo?.email
+    });
+    
+    // Check if Firebase Auth is available
+    if (!isFirebaseAuthAvailable()) {
+      throw new GoogleAuthError(
+        'Firebase Auth not available for production login',
+        ERROR_CODES.FIREBASE_AUTH_UNAVAILABLE
+      );
+    }
+
+    try {
+      const requestBody = {
+        userInfo: userInfo,
+        email: userInfo.email,
+        googleId: userInfo.id,
+        name: userInfo.name,
+        photo: userInfo.photo,
+        timestamp: new Date().toISOString()
+      };
+
+      googleAuthDebugger.debug('Making API request', {
+        url: `${config.API_URL}/buyer/google-login`,
+        method: 'POST',
+        bodyKeys: Object.keys(requestBody)
+      });
+
+      const response = await fetch(`${config.API_URL}/buyer/google-login`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'User-Agent': 'BiteAndCo-Mobile/1.0.0',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      googleAuthDebugger.debug('API response received', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new GoogleAuthError(
+          `API Error: ${response.status} - ${response.statusText}`,
+          ERROR_CODES.BACKEND_API_ERROR,
+          {
+            status: response.status,
+            statusText: response.statusText,
+            responseText: errorText,
+            url: `${config.API_URL}/buyer/google-login`
+          }
+        );
+      }
+
+      const result = await response.json();
+      
+      googleAuthDebugger.debug('API response parsed', {
+        hasToken: !!result.token,
+        hasUser: !!result.user,
+        responseKeys: Object.keys(result)
+      });
+
+      if (!result.token) {
+        throw new GoogleAuthError(
+          'No authentication token received from server',
+          ERROR_CODES.INVALID_RESPONSE,
+          { response: result }
+        );
+      }
+
+      googleAuthDebugger.info('Production login successful', {
+        hasToken: true,
+        userEmail: result.user?.email || userInfo.email
+      });
+
+      return {
+        success: true,
+        token: result.token,
+        user: result.user || userInfo,
+        isSandbox: false
+      };
+
+    } catch (fetchError) {
+      if (fetchError instanceof GoogleAuthError) {
+        throw fetchError;
+      }
+      
+      throw new GoogleAuthError(
+        `Network error: ${fetchError.message}`,
+        ERROR_CODES.NETWORK_ERROR,
+        {
+          originalError: fetchError.message,
+          stack: fetchError.stack
+        }
+      );
+    }
+  };
+
+  // Mode switching utilities
+  const switchToSandboxMode = () => {
+    authModeManager.setMode('SANDBOX');
+    setCurrentMode('SANDBOX');
+    setIsProduction(false);
+    googleAuthDebugger.info('Switched to SANDBOX mode');
+  };
+
+  const switchToProductionMode = () => {
+    authModeManager.setMode('PRODUCTION');
+    setCurrentMode('PRODUCTION');
+    setIsProduction(true);
+    googleAuthDebugger.info('Switched to PRODUCTION mode');
+  };
+
+  // Debug utilities
+  const getDebugLogs = () => {
+    return googleAuthDebugger.getLogs();
+  };
+
+  const exportDebugLogs = () => {
+    return googleAuthDebugger.exportLogs();
+  };
+
+  const clearDebugLogs = () => {
+    googleAuthDebugger.clearLogs();
+  };
+
+  // Check user existence (for both modes)
+  const checkUserExists = async (email, googleId) => {
+    googleAuthDebugger.info('Checking user existence', { email, googleId, mode: currentMode });
+
+    try {
+      if (authModeManager.isSandboxMode()) {
+        // Sandbox mode - check against sandbox users
+        const sandboxUser = SANDBOX_USERS.find(user => user.email === email);
+        const exists = !!sandboxUser && !sandboxUser.isNew;
+        
+        googleAuthDebugger.info('Sandbox user check result', {
+          email,
+          exists,
+          userFound: !!sandboxUser,
+          isNew: sandboxUser?.isNew
+        });
+
+        return {
+          success: true,
+          exists,
+          isSandbox: true
+        };
+      } else {
+        // Production mode - check with backend API
+        const response = await fetch(`${config.API_URL}/buyer/check-google-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            googleId,
+            timestamp: new Date().toISOString()
+          }),
+        });
+
+        if (!response.ok) {
+          throw new GoogleAuthError(
+            `Failed to check user existence: ${response.status}`,
+            ERROR_CODES.BACKEND_API_ERROR,
+            { status: response.status, email }
+          );
+        }
+
+        const result = await response.json();
+        
+        googleAuthDebugger.info('Production user check result', {
+          email,
+          exists: result.exists
+        });
+
+        return {
+          success: true,
+          exists: result.exists,
+          isSandbox: false
+        };
+      }
+    } catch (error) {
+      googleAuthDebugger.error('User existence check failed', {
+        error: error.message,
+        email,
+        mode: currentMode
+      });
+
+      return {
+        success: false,
+        error: error.message,
+        exists: false
+      };
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      googleAuthDebugger.info('Sign out initiated', { mode: currentMode });
+      
+      if (authModeManager.isProductionMode() && isFirebaseAuthAvailable()) {
+        await auth.signOut();
+        googleAuthDebugger.info('Firebase sign out successful');
+      } else {
+        googleAuthDebugger.info('Sandbox mode sign out (no Firebase action needed)');
+      }
+      
+      console.log('User signed out successfully');
+    } catch (error) {
+      googleAuthDebugger.error('Sign out error', { error: error.message });
+      console.error('Sign out error:', error);
+    }
+  };
+
+  const getCurrentUser = async () => {
+    try {
+      if (authModeManager.isSandboxMode()) {
+        // Return current sandbox user if any
+        return SANDBOX_USERS[0]; // Default to first user for demo
+      }
+
+      if (!isFirebaseAuthAvailable()) {
+        return null;
+      }
+
+      // With Expo Auth Session, we rely on Firebase Auth state
+      return auth.currentUser ? {
+        id: auth.currentUser.uid,
+        name: auth.currentUser.displayName,
+        email: auth.currentUser.email,
+        photo: auth.currentUser.photoURL,
+      } : null;
+    } catch (error) {
+      googleAuthDebugger.error('Get current user error', { error: error.message });
+      return null;
+    }
+  };
+
+  return {
+    signInWithGoogle,
+    loginWithGoogle,
+    signOut,
+    getCurrentUser,
+    checkUserExists,
+    isLoading,
+    isProduction,
+    currentMode,
+    isSandboxMode: authModeManager.isSandboxMode(),
+    isProductionMode: authModeManager.isProductionMode(),
+    switchToSandboxMode,
+    switchToProductionMode,
+    getDebugLogs,
+    exportDebugLogs,
+    clearDebugLogs,
+    isFirebaseAuthAvailable: isFirebaseAuthAvailable(),
+    sandboxUsers: SANDBOX_USERS,
+  };
+};
+
+export default useGoogleAuth;

@@ -5,14 +5,73 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "expo-router";
-import google from "../../assets/images/google.png";
-import { Image } from "react-native";
+import { useBuyerAuth } from '../hooks/useBuyerAuth.js';
+import config from '../constants/config';
 
 const BuyerIndex = () => {
   const router = useRouter();
+  const { login } = useBuyerAuth();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleLogin = async () => {
+    if (!formData.email || !formData.password) {
+      Alert.alert("Error", "Email dan password harus diisi");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${config.API_URL}/buyer/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Login failed");
+      }
+
+      if (!result.token) {
+        throw new Error("Token not received");
+      }
+
+      // Use the auth hook to handle login
+      await login(result.token);
+
+      // Navigate to buyer tabs
+      router.push("/buyer/(tabs)");
+
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert("Error", error.message || "Gagal masuk. Periksa email dan password Anda.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={{ backgroundColor: "#711330", height: "100%" }}>
       <View
@@ -42,6 +101,8 @@ const BuyerIndex = () => {
         </Text>
         <TextInput
           placeholder="Email"
+          value={formData.email}
+          onChangeText={(value) => handleInputChange("email", value)}
           style={{
             backgroundColor: "#f7f7f7",
             padding: 15,
@@ -49,15 +110,20 @@ const BuyerIndex = () => {
             width: "100%",
             marginVertical: 20,
           }}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
         <TextInput
           placeholder="Password"
+          value={formData.password}
+          onChangeText={(value) => handleInputChange("password", value)}
           style={{
             backgroundColor: "#f7f7f7",
             padding: 15,
             borderRadius: 10,
             width: "100%",
           }}
+          secureTextEntry
         />
         <Text
           style={{
@@ -79,10 +145,35 @@ const BuyerIndex = () => {
             width: "100%",
             alignItems: "center",
             justifyContent: "center",
+            opacity: isLoading ? 0.7 : 1,
+          }}
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text
+            style={{
+              color: "#711330",
+              fontSize: 18,
+              fontWeight: "bold",
+            }}
+          >
+            {isLoading ? "Masuk..." : "Masuk"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: "#FFB800",
+            paddingVertical: 10,
+            paddingHorizontal: 20,
+            borderRadius: 5,
+            marginTop: 20,
+            width: "100%",
+            alignItems: "center",
+            justifyContent: "center",
           }}
           onPress={() => {
-            // Handle button press
-            router.push("/buyer/(tabs)");
+            router.push("/buyer/BuyerRegister");
           }}
         >
           <Text
@@ -92,40 +183,10 @@ const BuyerIndex = () => {
               fontWeight: "bold",
             }}
           >
-            Masuk
+            Daftar Dengan E-Mail
           </Text>
         </TouchableOpacity>
-        <View style={{
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            paddingVertical: 10,
-        }}>
-          <Text style={{ color: 'white', fontSize: 16}}>Atau</Text>
-        </View>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: "white",
-            paddingVertical: 10,
-            paddingHorizontal: 20,
-            borderRadius: 5,
-            width: "100%",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "row",
-          }}
-        >
-            <Image source={google} style={{ marginRight: 10, width: 20, height: 20 }} />
-          <Text
-            style={{ 
-              fontSize: 14,
-              fontWeight: "bold",
-            }}
-          >
-            Continue with Google
-          </Text>
-        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

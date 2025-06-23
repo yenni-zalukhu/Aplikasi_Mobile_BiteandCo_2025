@@ -1,10 +1,10 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import HeaderTitleBack from "../components/HeaderTitleBack";
-import COLORS from "../constants/color";
+import HeaderTitleBack from '../components/HeaderTitleBack';
+import COLORS from '../constants/color';
 import menuIcon from "../../assets/images/menuIcon.png";
-import { ArrowRight2 } from "iconsax-react-native";
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Card = ({ name, address, date, status, statusColor }) => {
   return (
@@ -58,7 +58,7 @@ const Card = ({ name, address, date, status, statusColor }) => {
           {status}
         </Text>
       </View>
-      <ArrowRight2 />
+      <AntDesign name="right" size={24} color="black" />
     </TouchableOpacity>
   );
 };

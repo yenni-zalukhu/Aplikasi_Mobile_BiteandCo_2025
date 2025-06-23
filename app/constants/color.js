@@ -12,7 +12,7 @@ const COLORS = {
     GREEN2: '#AFB73D',
     RED: '#F45151',
     YELLOW2: '#FCC81F',
-    GREEN3: '#4C7031',
+    GREEN3: '#711330',
     GREEN4: '#34A853',
     BLUE2: "#00B4D8",
 }
