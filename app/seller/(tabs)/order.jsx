@@ -111,6 +111,34 @@ const RANTANGAN_RECURRING_STEPS = [
   },
 ];
 
+// Bite Eco status steps
+const BITE_ECO_STEPS = [
+  {
+    key: "waiting_approval",
+    label: "Terima atau Tolak",
+    icon: "hourglass-empty",
+    color: COLORS.BLUE2,
+  },
+  {
+    key: "processing",
+    label: "Siapkan Item",
+    icon: "eco",
+    color: COLORS.GREEN4,
+  },
+  {
+    key: "delivery",
+    label: "Kirim Item",
+    icon: "local-shipping",
+    color: COLORS.GREEN4,
+  },
+  {
+    key: "completed",
+    label: "Selesai",
+    icon: "check-circle",
+    color: COLORS.GREEN3,
+  },
+];
+
 // Helper function to calculate days remaining for Rantangan orders
 const calculateDaysRemaining = (startDate, endDate, dailyDeliveryLogs = []) => {
   if (!startDate || !endDate) return 0;
@@ -155,6 +183,9 @@ const canStartToday = (startDate) => {
 
 // Helper function to get appropriate status steps based on order type
 const getStatusSteps = (orderType, packageType) => {
+  if (orderType === 'Bite Eco') {
+    return BITE_ECO_STEPS;
+  }
   if (orderType === 'Rantangan' || (orderType && orderType.includes('Rantangan'))) {
     if (packageType === 'Harian') {
       return RANTANGAN_HARIAN_STEPS;
@@ -459,12 +490,126 @@ const CardStatus = ({
     return dailyDeliveryLogs.some(log => log.deliveryDate === today);
   };
 
-  // Helper function to render progress action buttons for Rantangan orders
+  // Helper function to render action buttons for Bite Eco orders
+  const renderBiteEcoActionButtons = () => {
+    switch (statusProgress) {
+      case "waiting_approval":
+        return (
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 4, marginBottom: 4 }}>
+            <TouchableOpacity
+              style={{ 
+                flex: 1, 
+                backgroundColor: "#4CAF50", 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                alignItems: "center", 
+                opacity: actionLoading ? 0.6 : 1 
+              }}
+              onPress={() => handleAction(onAccept)}
+              disabled={actionLoading}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                {actionLoading ? "Mohon Tunggu..." : "Terima Pesanan"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ 
+                flex: 1, 
+                backgroundColor: "#F44336", 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                alignItems: "center", 
+                opacity: actionLoading ? 0.6 : 1 
+              }}
+              onPress={() => handleAction(onCancel)}
+              disabled={actionLoading}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                {actionLoading ? "Mohon Tunggu..." : "Tolak Pesanan"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case "processing":
+        return (
+          <View style={{ marginTop: 4, marginBottom: 4 }}>
+            <TouchableOpacity
+              style={{ 
+                backgroundColor: COLORS.GREEN4, 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                alignItems: "center", 
+                opacity: actionLoading ? 0.6 : 1 
+              }}
+              onPress={() => handleAction(onSendOrder)}
+              disabled={actionLoading}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                {actionLoading ? "Mohon Tunggu..." : "Kirim Pesanan"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case "delivery":
+        return (
+          <View style={{ marginTop: 4, marginBottom: 4 }}>
+            <TouchableOpacity
+              style={{ 
+                backgroundColor: "#4CAF50", 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                alignItems: "center", 
+                opacity: actionLoading ? 0.6 : 1 
+              }}
+              onPress={() => handleAction(onCompleteOrder)}
+              disabled={actionLoading}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                {actionLoading ? "Mohon Tunggu..." : "Selesaikan Orderan"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      case "completed":
+        return (
+          <View style={{ marginTop: 4, marginBottom: 4 }}>
+            <TouchableOpacity
+              style={{ 
+                backgroundColor: "#4CAF50", 
+                paddingVertical: 12, 
+                borderRadius: 8, 
+                alignItems: "center", 
+                opacity: 0.6 
+              }}
+              disabled={true}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                Pesanan Selesai
+              </Text>
+            </TouchableOpacity>
+          </View>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Helper function to render action buttons for Rantangan orders
   const renderRantanganActionButtons = () => {
     const isRantangan = orderType === 'Rantangan' || (orderType && orderType.includes('Rantangan'));
+    const isBiteEco = orderType === 'Bite Eco';
     const isHarian = packageType === 'Harian';
     const isRecurring = packageType === 'Mingguan' || packageType === 'Bulanan';
     const orderCanStart = canStartToday(startDate);
+
+    if (isBiteEco) {
+      // Bite Eco specific buttons
+      return renderBiteEcoActionButtons();
+    }
 
     if (!isRantangan) {
       // Regular order buttons (existing logic)

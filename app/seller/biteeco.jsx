@@ -10,21 +10,26 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import HeaderTitleBack from '../components/HeaderTitleBack';
 import COLORS from '../constants/color';
 
 const BiteEcoSeller = () => {
+  const router = useRouter();
+
   const ecoFeatures = [
+    {
+      icon: 'recycling',
+      title: 'Kelola Limbah Makanan',
+      description: 'Posting dan jual limbah makanan Anda kepada pembeli yang membutuhkan',
+      color: COLORS.GREEN4,
+      action: () => router.push('/seller/biteeco/management'),
+      actionText: 'Kelola Limbah',
+    },
     {
       icon: 'eco',
       title: 'Kemasan Ramah Lingkungan',
       description: 'Dapatkan kemasan biodegradable untuk semua pesanan',
-      color: COLORS.GREEN4,
-    },
-    {
-      icon: 'recycling',
-      title: 'Program Daur Ulang',
-      description: 'Ikuti program pengumpulan kemasan bekas untuk didaur ulang',
       color: '#4CAF50',
     },
     {
@@ -74,13 +79,18 @@ const BiteEcoSeller = () => {
     });
   };
 
-  const FeatureCard = ({ icon, title, description, color }) => (
+  const FeatureCard = ({ icon, title, description, color, action, actionText }) => (
     <View style={styles.featureCard}>
       <View style={[styles.featureIcon, { backgroundColor: color + '20' }]}>
         <MaterialIcons name={icon} size={28} color={color} />
       </View>
       <Text style={styles.featureTitle}>{title}</Text>
       <Text style={styles.featureDescription}>{description}</Text>
+      {action && actionText && (
+        <TouchableOpacity style={[styles.featureAction, { backgroundColor: color }]} onPress={action}>
+          <Text style={styles.featureActionText}>{actionText}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -137,6 +147,8 @@ const BiteEcoSeller = () => {
                 title={feature.title}
                 description={feature.description}
                 color={feature.color}
+                action={feature.action}
+                actionText={feature.actionText}
               />
             ))}
           </View>
@@ -423,5 +435,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  featureAction: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  featureActionText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

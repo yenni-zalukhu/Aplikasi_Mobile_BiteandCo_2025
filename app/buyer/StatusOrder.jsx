@@ -166,6 +166,34 @@ const RANTANGAN_RECURRING_STEPS = [
   },
 ];
 
+// Bite Eco status steps
+const BITE_ECO_STEPS = [
+  {
+    key: "waiting_approval",
+    label: "Menunggu Persetujuan",
+    icon: "hourglass-empty",
+    color: COLORS.BLUE2,
+  },
+  {
+    key: "processing",
+    label: "Disiapkan",
+    icon: "eco",
+    color: COLORS.GREEN4,
+  },
+  {
+    key: "delivery",
+    label: "Lacak Pesanan",
+    icon: "location-on",
+    color: COLORS.GREEN4,
+  },
+  {
+    key: "completed",
+    label: "Selesai",
+    icon: "check-circle",
+    color: COLORS.GREEN3,
+  },
+];
+
 // Helper function to calculate days remaining for Rantangan orders
 const calculateDaysRemaining = (startDate, endDate, dailyDeliveryLogs = []) => {
   if (!startDate || !endDate) return 0;
@@ -210,6 +238,9 @@ const canStartToday = (startDate) => {
 
 // Helper function to get appropriate status steps based on order type
 const getStatusSteps = (orderType, packageType) => {
+  if (orderType === 'Bite Eco') {
+    return BITE_ECO_STEPS;
+  }
   if (orderType === 'Rantangan' || (orderType && orderType.includes('Rantangan'))) {
     if (packageType === 'Harian') {
       return RANTANGAN_HARIAN_STEPS;

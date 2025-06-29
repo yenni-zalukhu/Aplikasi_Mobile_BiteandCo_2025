@@ -132,7 +132,7 @@ const MenuSection = ({ router }) => {
       icon: biteeco,
       iconType: "image",
       label: "Bite Eco",
-      onPress: () => router.push("seller/biteeco"),
+      onPress: () => router.push("seller/biteeco/management"),
     },
     {
       icon: ulasan,
@@ -334,7 +334,7 @@ const ExpandableMenu = () => {
       icon: laporan,
       iconType: "image",
       label: "Laporan",
-      onPress: () => router.push("seller/(tabs)/laporan"),
+      onPress: () => router.push("seller/Laporan"),
     },
   ];
 

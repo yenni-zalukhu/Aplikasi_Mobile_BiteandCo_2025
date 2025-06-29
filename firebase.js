@@ -27,7 +27,6 @@ try {
     // Web implementation
     const { getAuth } = require("firebase/auth");
     auth = getAuth(app);
-    console.log('Firebase Auth initialized for Web');
   } else if (isNativeBuild) {
     // Native app build (development build or production build)
     const ReactNativeAsyncStorage = require('@react-native-async-storage/async-storage').default;
@@ -37,16 +36,13 @@ try {
       persistence: getReactNativePersistence(ReactNativeAsyncStorage)
     });
     
-    console.log('Firebase Auth initialized for Native Build with AsyncStorage');
   } else {
     // Expo Go fallback - basic auth without persistence
     const { getAuth } = require("firebase/auth");
     auth = getAuth(app);
-    console.log('Firebase Auth initialized for Expo Go (limited functionality)');
   }
 } catch (error) {
   console.warn('Firebase Auth initialization warning:', error.message);
-  console.log('Continuing without Firebase Auth');
   auth = null;
 }
 

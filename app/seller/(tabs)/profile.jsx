@@ -106,7 +106,6 @@ const profile = () => {
     try {
       await AsyncStorage.removeItem("sellerToken");
       router.push("/"); // Navigate to index.jsx (first screen)
-      console.log("Signed out successfully");
     } catch (err) {
       console.error("Sign out error:", err);
     }
@@ -261,7 +260,6 @@ const profile = () => {
   // Add this function before the return statement in the profile component
   // Use modal instead of router.push for PinPointMapModal
   const openPinPointMap = () => {
-    console.log('openPinPointMap pinPoint:', pinPoint);
     setShowPinModal(true);
   };
 

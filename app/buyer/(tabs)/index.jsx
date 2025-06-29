@@ -4,6 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import COLORS from "../../constants/color";
 import banner1 from "../../../assets/images/banner1.png";
 import recycle from "../../../assets/images/recycle.png";
+import iconBiteEco from "../../../assets/images/icon-biteeco.png";
+import iconCatering from "../../../assets/images/icon-catering.png";
+import iconRantangan from "../../../assets/images/icon-rantangan.png";
 import storeIcon from "../../../assets/images/store.png";
 import { useRouter } from "expo-router";
 import config from "../../constants/config";
@@ -85,24 +88,17 @@ const ExpandableMenu = () => {
   const loadBuyerLocation = async () => {
     try {
       const savedPinPoint = await AsyncStorage.getItem('pinPoint');
-      console.log('[DEBUG] Raw savedPinPoint from AsyncStorage:', savedPinPoint);
       
       if (savedPinPoint) {
         const pinPoint = JSON.parse(savedPinPoint);
-        console.log('[DEBUG] Parsed pinPoint:', pinPoint);
         
         if (pinPoint.lat && pinPoint.lng) {
           const location = {
             lat: pinPoint.lat,
             lng: pinPoint.lng
           };
-          console.log('[DEBUG] Setting buyer location:', location);
           setBuyerLocation(location);
-        } else {
-          console.log('[DEBUG] PinPoint exists but missing lat/lng coordinates');
         }
-      } else {
-        console.log('[DEBUG] No pinPoint found in AsyncStorage');
       }
     } catch (error) {
       console.error('Error loading buyer location:', error);
@@ -117,15 +113,10 @@ const ExpandableMenu = () => {
       let apiUrl = `${config.API_URL}/seller/list`;
       if (buyerLocation) {
         apiUrl += `?buyerLat=${buyerLocation.lat}&buyerLng=${buyerLocation.lng}`;
-        console.log('[DEBUG] API URL with buyer location:', apiUrl);
-      } else {
-        console.log('[DEBUG] API URL without buyer location:', apiUrl);
-        console.log('[DEBUG] buyerLocation is:', buyerLocation);
       }
 
       const res = await fetch(apiUrl);
       const data = await res.json();
-      console.log('[DEBUG] /seller/list response:', data); // <-- log API response
       if (res.ok && data.sellers) {
         setStores(
           data.sellers.map((s) => ({
@@ -155,15 +146,10 @@ const ExpandableMenu = () => {
       let apiUrl = `${config.API_URL}/seller/rantangan-list`;
       if (buyerLocation) {
         apiUrl += `?buyerLat=${buyerLocation.lat}&buyerLng=${buyerLocation.lng}`;
-        console.log('[DEBUG] Rantangan API URL with buyer location:', apiUrl);
-      } else {
-        console.log('[DEBUG] Rantangan API URL without buyer location:', apiUrl);
-        console.log('[DEBUG] buyerLocation is:', buyerLocation);
       }
 
       const res = await fetch(apiUrl);
       const data = await res.json();
-      console.log('[DEBUG] /seller/rantangan-list response:', data);
       if (res.ok && data.sellers) {
         setRantanganStores(
           data.sellers.map((s) => ({
@@ -225,8 +211,8 @@ const ExpandableMenu = () => {
       <View style={styles.categories}>
         <CircleButton icon={recycle} text={"Catering"} navigateTo="buyer/CateringList" />
         <CircleButton icon={recycle} text={"Rantangan"} navigateTo="buyer/RantanganList" />
-        <CircleButton icon={recycle} text={"Gizi Pro"} />
-        <CircleButton icon={recycle} text={"Food Waste"} />
+        <CircleButton icon={recycle} text={"Gizi Pro"} navigateTo="buyer/GiziPro" />
+        <CircleButton icon={recycle} text={"Bite Eco"} navigateTo="buyer/BiteEco" />
       </View>
 
       <View style={styles.storeSection}>

@@ -113,34 +113,6 @@ const GiziProSeller = () => {
           ))}
         </View>
 
-        {/* Pricing Section */}
-        <View style={styles.pricingSection}>
-          <View style={styles.pricingCard}>
-            <Text style={styles.pricingTitle}>Paket Premium</Text>
-            <Text style={styles.pricingPrice}>Rp 299.000</Text>
-            <Text style={styles.pricingPeriod}>per bulan</Text>
-            
-            <View style={styles.pricingFeatures}>
-              <View style={styles.pricingFeature}>
-                <MaterialIcons name="check" size={16} color={COLORS.GREEN3} />
-                <Text style={styles.pricingFeatureText}>Analisis 50 menu</Text>
-              </View>
-              <View style={styles.pricingFeature}>
-                <MaterialIcons name="check" size={16} color={COLORS.GREEN3} />
-                <Text style={styles.pricingFeatureText}>Konsultasi ahli gizi</Text>
-              </View>
-              <View style={styles.pricingFeature}>
-                <MaterialIcons name="check" size={16} color={COLORS.GREEN3} />
-                <Text style={styles.pricingFeatureText}>Laporan bulanan</Text>
-              </View>
-              <View style={styles.pricingFeature}>
-                <MaterialIcons name="check" size={16} color={COLORS.GREEN3} />
-                <Text style={styles.pricingFeatureText}>Sertifikat resmi</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
         {/* CTA Section */}
         <View style={styles.ctaSection}>
           <TouchableOpacity
@@ -258,52 +230,6 @@ const styles = StyleSheet.create({
     color: '#333',
     flex: 1,
     lineHeight: 20,
-  },
-  pricingSection: {
-    paddingHorizontal: 20,
-    marginBottom: 32,
-  },
-  pricingCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: COLORS.PRIMARY,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  pricingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    marginBottom: 8,
-  },
-  pricingPrice: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  pricingPeriod: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-  },
-  pricingFeatures: {
-    width: '100%',
-  },
-  pricingFeature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  pricingFeatureText: {
-    fontSize: 14,
-    color: '#333',
   },
   ctaSection: {
     paddingHorizontal: 20,
